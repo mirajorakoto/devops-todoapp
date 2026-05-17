@@ -7,7 +7,7 @@ on:
     branches: [ main ]
 
 env:
-  IMAGE_NAME: mirajorakoto/todoapp
+  IMAGE_NAME: mirajohenry/todoapp
 
 jobs:
 
@@ -37,7 +37,7 @@ jobs:
         run: mvn clean compile -q
 
       - name: Lancer les tests
-        run: mvn test -q
+        run: mvn test -DskipTests=false
 
       - name: Package JAR
         run: mvn package -DskipTests -q
@@ -47,7 +47,6 @@ jobs:
         with:
           name: app-jar
           path: target/*.jar
-
   # ===== JOB 2 : DOCKER BUILD & PUSH =====
   docker-build-push:
     name: Docker Build & Push
