@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TodoApp — DevOps</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Segoe UI',sans-serif;background:#0f172a;color:#e2e8f0;display:flex;min-height:100vh}
+
+/* SIDEBAR */
+.sidebar{width:240px;background:#1e293b;border-right:1px solid #334155;padding:1.5rem 1rem;display:flex;flex-direction:column;gap:1.5rem;position:fixed;top:0;left:0;height:100vh;overflow-y:auto}
+.logo{display:flex;align-items:center;gap:10px;font-size:18px;font-weight:700;color:#38bdf8;padding:0 8px}
+.logo span{font-size:24px}
+.nav-section{font-size:10px;color:#64748b;letter-spacing:0.1em;padding:0 8px;margin-top:0.5rem}
+.nav-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;font-size:14px;color:#94a3b8;cursor:pointer;transition:all 0.2s}
+.nav-item:hover{background:#334155;color:#e2e8f0}
+.nav-item.active{background:#0ea5e920;color:#38bdf8;font-weight:600}
+.nav-item .icon{font-size:18px}
+.cat-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.user-card{margin-top:auto;display:flex;align-items:center;gap:10px;padding:10px 12px;background:#0f172a;border-radius:10px;border:1px solid #334155}
+.avatar{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,#38bdf8,#818cf8);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;flex-shrink:0}
+.user-info .name{font-size:13px;font-weight:600}
+.user-info .role{font-size:11px;color:#64748b}
+
+/* MAIN */
+.main{margin-left:240px;flex:1;padding:2rem;min-height:100vh}
+
+/* TOPBAR */
+.topbar{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:2rem}
+.topbar h1{font-size:22px;font-weight:700;color:#f1f5f9}
+.topbar .date{font-size:13px;color:#64748b;margin-top:4px}
+.topbar-actions{display:flex;gap:8px;align-items:center}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:9px 16px;border-radius:10px;border:1px solid #334155;background:#1e293b;color:#e2e8f0;font-size:13px;cursor:pointer;transition:all 0.2s;font-weight:500}
+.btn:hover{background:#334155}
+.btn-primary{background:#0ea5e9;border-color:#0ea5e9;color:#fff}
+.btn-primary:hover{background:#0284c7}
+.btn-danger{background:#ef444420;border-color:#ef4444;color:#ef4444}
+.btn-danger:hover{background:#ef444430}
+
+/* STATS */
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-bottom:2rem}
+.stat-card{background:#1e293b;border:1px solid #334155;border-radius:14px;padding:1.25rem}
+.stat-icon{font-size:22px;margin-bottom:0.5rem}
+.stat-label{font-size:12px;color:#64748b;margin-bottom:4px}
+.stat-value{font-size:28px;font-weight:700}
+.stat-sub{font-size:11px;color:#64748b;margin-top:4px}
+.progress-bar{height:4px;background:#334155;border-radius:999px;margin-top:8px;overflow:hidden}
+.progress-fill{height:100%;border-radius:999px;transition:width 0.5s ease}
+
+/* CONTENT */
+.content-grid{display:grid;grid-template-columns:1fr 340px;gap:1.5rem}
+
+/* CARD */
+.card{background:#1e293b;border:1px solid #334155;border-radius:14px;padding:1.25rem}
+.card-title{font-size:15px;font-weight:600;color:#f1f5f9;margin-bottom:1rem;display:flex;align-items:center;justify-content:space-between}
+
+/* SEARCH & FILTERS */
+.search-bar{display:flex;align-items:center;gap:8px;background:#0f172a;border:1px solid #334155;border-radius:10px;padding:8px 12px;margin-bottom:1rem}
+.search-bar input{background:transparent;border:none;outline:none;color:#e2e8f0;font-size:13px;flex:1}
+.search-bar input::placeholder{color:#475569}
+.filter-tabs{display:flex;gap:6px;margin-bottom:1rem}
+.filter-tab{padding:5px 14px;border-radius:999px;border:1px solid #334155;background:transparent;color:#94a3b8;font-size:12px;cursor:pointer;transition:all 0.2s}
+.filter-tab.active{background:#0ea5e920;border-color:#0ea5e9;color:#38bdf8;font-weight:600}
+
+/* TASKS */
+.task-list{display:flex;flex-direction:column;gap:2px}
+.task-item{display:flex;align-items:center;gap:12px;padding:12px 10px;border-radius:10px;transition:background 0.15s;cursor:default}
+.task-item:hover{background:#0f172a}
+.task-check{width:20px;height:20px;border-radius:50%;border:2px solid #475569;display:flex;align-items:center;justify-content:center;flex-shrink:0;cursor:pointer;transition:all 0.2s}
+.task-check:hover{border-color:#0ea5e9}
+.task-check.done{background:#22c55e;border-color:#22c55e}
+.task-check.done::after{content:'✓';font-size:11px;color:#fff;font-weight:700}
+.task-info{flex:1;min-width:0}
+.task-title{font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#e2e8f0}
+.task-title.done{text-decoration:line-through;color:#475569}
+.task-desc{font-size:11px;color:#64748b;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.task-meta{display:flex;align-items:center;gap:6px;flex-shrink:0}
+.task-actions{display:flex;gap:4px;opacity:0;transition:opacity 0.15s}
+.task-item:hover .task-actions{opacity:1}
+.icon-btn{width:28px;height:28px;border-radius:8px;border:1px solid #334155;background:transparent;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#94a3b8;font-size:14px;transition:all 0.2s}
+.icon-btn:hover{background:#334155;color:#e2e8f0}
+.icon-btn.del:hover{background:#ef444420;border-color:#ef4444;color:#ef4444}
+
+/* BADGES */
+.badge{display:inline-flex;align-items:center;font-size:10px;padding:3px 8px;border-radius:999px;font-weight:600;letter-spacing:0.02em}
+.badge-green{background:#22c55e20;color:#4ade80}
+.badge-amber{background:#f59e0b20;color:#fbbf24}
+.badge-red{background:#ef444420;color:#f87171}
+.badge-blue{background:#3b82f620;color:#60a5fa}
+.badge-purple{background:#a855f720;color:#c084fc}
+.cat-badge{display:inline-flex;align-items:center;gap:4px;font-size:10px;padding:2px 8px;border-radius:999px;background:#334155;color:#94a3b8}
+
+/* FORM */
+.form-group{display:flex;flex-direction:column;gap:6px;margin-bottom:12px}
+.form-label{font-size:11px;color:#94a3b8;font-weight:600;text-transform:uppercase;letter-spacing:0.05em}
+.form-input{background:#0f172a;border:1px solid #334155;border-radius:8px;padding:9px 12px;color:#e2e8f0;font-size:13px;outline:none;transition:border-color 0.2s;font-family:inherit}
+.form-input:focus{border-color:#0ea5e9}
+textarea.form-input{resize:vertical;min-height:75px}
+select.form-input{cursor:pointer}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+
+/* ACTIVITY */
+.activity-item{display:flex;align-items:flex-start;gap:10px;padding:10px 0;border-bottom:1px solid #1e293b}
+.activity-item:last-child{border-bottom:none}
+.act-dot{width:8px;height:8px;border-radius:50%;margin-top:5px;flex-shrink:0}
+.act-text{font-size:12px;color:#94a3b8;line-height:1.5}
+.act-time{font-size:10px;color:#475569;margin-top:3px}
+
+/* EMPTY */
+.empty-state{text-align:center;padding:2.5rem 1rem;color:#475569}
+.empty-state .empty-icon{font-size:36px;margin-bottom:0.5rem}
+
+/* TOAST */
+.toast{position:fixed;bottom:1.5rem;right:1.5rem;padding:10px 18px;border-radius:10px;font-size:13px;font-weight:500;color:#fff;display:none;z-index:9999;box-shadow:0 4px 20px rgba(0,0,0,0.4)}
+
+/* MODAL */
+.modal-overlay{position:fixed;inset:0;background:#00000080;z-index:100;display:none;align-items:center;justify-content:center}
+.modal-overlay.open{display:flex}
+.modal{background:#1e293b;border:1px solid #334155;border-radius:16px;padding:1.5rem;width:420px;max-width:90vw}
+.modal-title{font-size:16px;font-weight:700;color:#f1f5f9;margin-bottom:1.25rem;display:flex;justify-content:space-between;align-items:center}
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<div class="sidebar">
+  <div class="logo"><span>📋</span> TodoApp</div>
+
+  <div style="display:flex;flex-direction:column;gap:2px">
+    <div class="nav-section">NAVIGATION</div>
+    <div class="nav-item active">🏠 Dashboard</div>
+    <div class="nav-item" onclick="filterAll()">✅ Toutes les tâches</div>
+    <div class="nav-item" onclick="filterStatus('false')">⏳ En cours</div>
+    <div class="nav-item" onclick="filterStatus('true')">🎯 Terminées</div>
+  </div>
+
+  <div style="display:flex;flex-direction:column;gap:2px">
+    <div class="nav-section">CATÉGORIES</div>
+    <div class="nav-item" onclick="filterCat('DevOps')">
+      <div class="cat-dot" style="background:#38bdf8"></div> DevOps
+    </div>
+    <div class="nav-item" onclick="filterCat('Backend')">
+      <div class="cat-dot" style="background:#818cf8"></div> Backend
+    </div>
+    <div class="nav-item" onclick="filterCat('Frontend')">
+      <div class="cat-dot" style="background:#f59e0b"></div> Frontend
+    </div>
+    <div class="nav-item" onclick="filterCat('Base de données')">
+      <div class="cat-dot" style="background:#22c55e"></div> Base de données
+    </div>
+    <div class="nav-item" onclick="filterAll()">
+      <div class="cat-dot" style="background:#94a3b8"></div> Autre
+    </div>
+  </div>
+
+  <div class="user-card">
+    <div class="avatar">MJ</div>
+    <div class="user-info">
+      <div class="name">Mirajo</div>
+      <div class="role">Stage DevOps 2026</div>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+  <div class="topbar">
+    <div>
+      <h1>Dashboard</h1>
+      <div class="date" id="current-date"></div>
+    </div>
+    <div class="topbar-actions">
+      <button class="btn" onclick="loadTasks()">🔄 Actualiser</button>
+      <button class="btn btn-primary" onclick="openModal()">+ Nouvelle tâche</button>
+    </div>
+  </div>
+
+  <!-- STATS -->
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-icon">📋</div>
+      <div class="stat-label">Total tâches</div>
+      <div class="stat-value" id="stat-total">0</div>
+      <div class="stat-sub" id="stat-total-sub">Chargement...</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon">✅</div>
+      <div class="stat-label">Terminées</div>
+      <div class="stat-value" id="stat-done" style="color:#22c55e">0</div>
+      <div class="progress-bar"><div class="progress-fill" id="stat-progress" style="background:#22c55e;width:0%"></div></div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon">⏳</div>
+      <div class="stat-label">En cours</div>
+      <div class="stat-value" id="stat-pending" style="color:#f59e0b">0</div>
+      <div class="stat-sub" id="stat-pending-sub">À traiter</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon">📊</div>
+      <div class="stat-label">Progression</div>
+      <div class="stat-value" id="stat-pct" style="color:#38bdf8">0%</div>
+      <div class="stat-sub">Taux de complétion</div>
+    </div>
+  </div>
+
+  <!-- CONTENT -->
+  <div class="content-grid">
+
+    <!-- LISTE DES TACHES -->
+    <div class="card">
+      <div class="card-title">
+        <span>Mes tâches</span>
+        <span id="task-count" style="font-size:12px;color:#64748b;font-weight:400"></span>
+      </div>
+
+      <div class="search-bar">
+        <span>🔍</span>
+        <input type="text" id="search-input" placeholder="Rechercher une tâche..." oninput="searchTasks()">
+      </div>
+
+      <div class="filter-tabs">
+        <button class="filter-tab active" onclick="setFilter('all',this)">Toutes</button>
+        <button class="filter-tab" onclick="setFilter('pending',this)">En cours</button>
+        <button class="filter-tab" onclick="setFilter('done',this)">Terminées</button>
+      </div>
+
+      <div class="task-list" id="task-list">
+        <div class="empty-state">
+          <div class="empty-icon">📭</div>
+          <div>Chargement des tâches...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PANNEAU DROIT -->
+    <div style="display:flex;flex-direction:column;gap:1rem">
+
+      <!-- FORMULAIRE RAPIDE -->
+      <div class="card">
+        <div class="card-title">⚡ Ajout rapide</div>
+        <div class="form-group">
+          <div class="form-label">Titre *</div>
+          <input class="form-input" type="text" id="q-title" placeholder="Nom de la tâche...">
+        </div>
+        <div class="form-group">
+          <div class="form-label">Description</div>
+          <textarea class="form-input" id="q-desc" placeholder="Détails optionnels..."></textarea>
+        </div>
+        <div class="form-row">
+          <div class="form-group" style="margin:0">
+            <div class="form-label">Catégorie</div>
+            <select class="form-input" id="q-cat">
+              <option>DevOps</option>
+              <option>Backend</option>
+              <option>Frontend</option>
+              <option>Base de données</option>
+              <option>Autre</option>
+            </select>
+          </div>
+          <div class="form-group" style="margin:0">
+            <div class="form-label">Priorité</div>
+            <select class="form-input" id="q-priority">
+              <option value="normale">Normale</option>
+              <option value="haute">Haute</option>
+              <option value="urgente">Urgente</option>
+            </select>
+          </div>
+        </div>
+        <button class="btn btn-primary" style="width:100%;justify-content:center;margin-top:4px" onclick="quickCreate()">
+          + Ajouter la tâche
+        </button>
+      </div>
+
+      <!-- ACTIVITE RECENTE -->
+      <div class="card">
+        <div class="card-title">🕐 Activité récente</div>
+        <div id="activity-list">
+          <div style="text-align:center;color:#475569;font-size:13px;padding:1rem">Aucune activité</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- MODAL CREATION -->
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <div class="modal-title">
+      <span>✨ Nouvelle tâche</span>
+      <button class="icon-btn" onclick="closeModal()" style="width:32px;height:32px">✕</button>
+    </div>
+    <div class="form-group">
+      <div class="form-label">Titre *</div>
+      <input class="form-input" type="text" id="m-title" placeholder="Nom de la tâche...">
+    </div>
+    <div class="form-group">
+      <div class="form-label">Description</div>
+      <textarea class="form-input" id="m-desc" placeholder="Description détaillée..."></textarea>
+    </div>
+    <div class="form-row">
+      <div class="form-group" style="margin:0">
+        <div class="form-label">Catégorie</div>
+        <select class="form-input" id="m-cat">
+          <option>DevOps</option>
+          <option>Backend</option>
+          <option>Frontend</option>
+          <option>Base de données</option>
+          <option>Autre</option>
+        </select>
+      </div>
+      <div class="form-group" style="margin:0">
+        <div class="form-label">Priorité</div>
+        <select class="form-input" id="m-priority">
+          <option value="normale">Normale</option>
+          <option value="haute">Haute</option>
+          <option value="urgente">Urgente</option>
+        </select>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:1rem">
+      <button class="btn" style="flex:1;justify-content:center" onclick="closeModal()">Annuler</button>
+      <button class="btn btn-primary" style="flex:2;justify-content:center" onclick="createFromModal()">Créer la tâche</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+const API = '/api/tasks';
+let allTasks = [];
+let currentFilter = 'all';
+let activities = [];
+
+// DATE
+const now = new Date();
+document.getElementById('current-date').textContent =
+  now.toLocaleDateString('fr-FR',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+
+// COULEURS CATEGORIES
+const catColors = {
+  'DevOps':'#38bdf8','Backend':'#818cf8',
+  'Frontend':'#f59e0b','Base de données':'#22c55e','Autre':'#94a3b8'
+};
+
+const prioColors = {
+  'normale':['badge-blue','Normale'],
+  'haute':['badge-amber','Haute'],
+  'urgente':['badge-red','Urgente']
+};
+
+// CHARGER LES TACHES
+async function loadTasks() {
+  try {
+    const res = await fetch(API);
+    allTasks = await res.json();
+    renderTasks(allTasks);
+    updateStats(allTasks);
+  } catch(e) {
+    document.getElementById('task-list').innerHTML =
+      '<div class="empty-state"><div class="empty-icon">⚠️</div><div>Erreur de connexion à l\'API</div></div>';
+  }
+}
+
+// AFFICHER LES TACHES
+function renderTasks(tasks) {
+  const list = document.getElementById('task-list');
+  let filtered = tasks;
+
+  if(currentFilter === 'pending') filtered = tasks.filter(t => !t.completed);
+  if(currentFilter === 'done') filtered = tasks.filter(t => t.completed);
+
+  const search = document.getElementById('search-input').value.toLowerCase();
+  if(search) filtered = filtered.filter(t =>
+    t.title.toLowerCase().includes(search) ||
+    (t.description||'').toLowerCase().includes(search)
+  );
+
+  document.getElementById('task-count').textContent = filtered.length + ' tâche(s)';
+
+  if(filtered.length === 0) {
+    list.innerHTML = '<div class="empty-state"><div class="empty-icon">📭</div><div>Aucune tâche trouvée</div></div>';
+    return;
+  }
+
+  list.innerHTML = filtered.map(task => {
+    const cat = task.category || 'Autre';
+    const catColor = catColors[cat] || '#94a3b8';
+    const prio = task.priority || 'normale';
+    const [prioClass, prioLabel] = prioColors[prio] || ['badge-blue','Normale'];
+    return `
+    <div class="task-item">
+      <div class="task-check ${task.completed?'done':''}"
+           onclick="toggleTask(${task.id},${!task.completed},'${escHtml(task.title)}','${escHtml(task.description||'')}','${cat}','${prio}')">
+        ${task.completed ? '' : ''}
+      </div>
+      <div class="task-info">
+        <div class="task-title ${task.completed?'done':''}">${escHtml(task.title)}</div>
+        ${task.description?`<div class="task-desc">${escHtml(task.description)}</div>`:''}
+      </div>
+      <div class="task-meta">
+        <span class="badge ${prioClass}">${prioLabel}</span>
+        <span class="cat-badge"><span style="width:6px;height:6px;border-radius:50%;background:${catColor};display:inline-block"></span>${cat}</span>
+      </div>
+      <div class="task-actions">
+        <button class="icon-btn del" onclick="deleteTask(${task.id},'${escHtml(task.title)}')">🗑</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// STATS
+function updateStats(tasks) {
+  const done = tasks.filter(t => t.completed).length;
+  const pct = tasks.length > 0 ? Math.round((done/tasks.length)*100) : 0;
+  document.getElementById('stat-total').textContent = tasks.length;
+  document.getElementById('stat-total-sub').textContent = tasks.length + ' tâche(s) au total';
+  document.getElementById('stat-done').textContent = done;
+  document.getElementById('stat-pending').textContent = tasks.length - done;
+  document.getElementById('stat-pct').textContent = pct + '%';
+  document.getElementById('stat-progress').style.width = pct + '%';
+  document.getElementById('stat-pending-sub').textContent =
+    (tasks.length - done) === 0 ? '🎉 Tout terminé !' : 'À traiter';
+}
+
+// CREER UNE TACHE
+async function quickCreate() {
+  const title = document.getElementById('q-title').value.trim();
+  const description = document.getElementById('q-desc').value.trim();
+  const category = document.getElementById('q-cat').value;
+  const priority = document.getElementById('q-priority').value;
+  if(!title){ showToast('⚠️ Le titre est obligatoire !','#f59e0b'); return; }
+  await createTask({title, description, category, priority});
+  document.getElementById('q-title').value = '';
+  document.getElementById('q-desc').value = '';
+}
+
+async function createFromModal() {
+  const title = document.getElementById('m-title').value.trim();
+  const description = document.getElementById('m-desc').value.trim();
+  const category = document.getElementById('m-cat').value;
+  const priority = document.getElementById('m-priority').value;
+  if(!title){ showToast('⚠️ Le titre est obligatoire !','#f59e0b'); return; }
+  await createTask({title, description, category, priority});
+  closeModal();
+  document.getElementById('m-title').value = '';
+  document.getElementById('m-desc').value = '';
+}
+
+async function createTask(data) {
+  await fetch(API, {
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify(data)
+  });
+  addActivity('✅', `Tâche créée : <strong>${escHtml(data.title)}</strong>`, '#22c55e');
+  showToast('✅ Tâche créée avec succès !','#22c55e');
+  loadTasks();
+}
+
+// TOGGLE COMPLETE
+async function toggleTask(id, completed, title, desc, cat, prio) {
+  await fetch(`${API}/${id}`, {
+    method:'PUT',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({title, description:desc, completed, category:cat, priority:prio})
+  });
+  const msg = completed ? `Tâche terminée : <strong>${escHtml(title)}</strong>` :
+                          `Tâche rouverte : <strong>${escHtml(title)}</strong>`;
+  addActivity(completed?'🎯':'↩️', msg, completed?'#22c55e':'#f59e0b');
+  showToast(completed ? '🎯 Tâche marquée terminée !' : '↩️ Tâche rouverte', completed?'#22c55e':'#f59e0b');
+  loadTasks();
+}
+
+// SUPPRIMER
+async function deleteTask(id, title) {
+  if(!confirm(`Supprimer "${title}" ?`)) return;
+  await fetch(`${API}/${id}`, {method:'DELETE'});
+  addActivity('🗑️', `Tâche supprimée : <strong>${escHtml(title)}</strong>`, '#ef4444');
+  showToast('🗑️ Tâche supprimée','#ef4444');
+  loadTasks();
+}
+
+// FILTRES
+function setFilter(f, el) {
+  currentFilter = f;
+  document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  renderTasks(allTasks);
+}
+
+function filterAll(){ currentFilter='all'; renderTasks(allTasks); }
+function filterStatus(done){
+  currentFilter = done==='true' ? 'done' : 'pending';
+  renderTasks(allTasks);
+}
+function filterCat(cat){
+  const filtered = allTasks.filter(t => (t.category||'Autre') === cat);
+  renderTasks(filtered);
+}
+
+function searchTasks(){ renderTasks(allTasks); }
+
+// ACTIVITE
+function addActivity(icon, text, color) {
+  const time = new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
+  activities.unshift({icon, text, color, time});
+  if(activities.length > 5) activities.pop();
+  renderActivity();
+}
+
+function renderActivity() {
+  const list = document.getElementById('activity-list');
+  if(activities.length === 0) {
+    list.innerHTML = '<div style="text-align:center;color:#475569;font-size:13px;padding:1rem">Aucune activité</div>';
+    return;
+  }
+  list.innerHTML = activities.map(a => `
+    <div class="activity-item">
+      <div class="act-dot" style="background:${a.color}"></div>
+      <div>
+        <div class="act-text">${a.text}</div>
+        <div class="act-time">${a.time}</div>
+      </div>
+    </div>`).join('');
+}
+
+// MODAL
+function openModal(){ document.getElementById('modal').classList.add('open'); }
+function closeModal(){ document.getElementById('modal').classList.remove('open'); }
+document.getElementById('modal').addEventListener('click', function(e){
+  if(e.target === this) closeModal();
+});
+
+// TOAST
+function showToast(msg, color='#22c55e') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.style.background = color;
+  t.style.display = 'block';
+  setTimeout(()=> t.style.display='none', 2500);
+}
+
+// ESCAPE HTML
+function escHtml(s){ return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+// DEMARRAGE
+loadTasks();
+</script>
+</body>
+</html>
+HTMLEOF
